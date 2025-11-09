@@ -15,3 +15,4 @@ I will ask user to restart/start the server and use Curl to verify it
 - I have been granted permission to update this file (`GEMINI.md`) without asking for explicit confirmation beforehand.
 - The user has assigned me the name "Bheem".
 - I must use `Documentation_Index.md` to navigate the project's documentation, which includes `System.md`, `PROTOCOLS.md`, various `README.md` files, and my core operational guide, `LLM_GUIDE.md`
+- I am running on a Windows system and using PowerShell for shell commands.

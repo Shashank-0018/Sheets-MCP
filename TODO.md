@@ -1,0 +1,22 @@
+- [x] Refactor `src/mcp-server.ts` to use ES modules.
+- [x] Fix route paths in `src/mcp-server.ts`.
+- [x] Create `src/index.ts` for server startup.
+- [x] Add `start` script to `package.json`.
+- [x] Create placeholder `secrets.json`.
+- [x] Implement OAuth2 token handling in `authorize` function.
+- [x] Implement a simple tool to read data from a Google Sheet.
+- [x] Add tests for the implemented tools.
+- [ ] Create tool: `createSpreadsheet` (POST /v4/spreadsheets)
+- [ ] Create tool: `getSpreadsheetById` (GET /v4/spreadsheets/{spreadsheetId})
+- [ ] Create tool: `batchUpdateSpreadsheetById` (POST /v4/spreadsheets/{spreadsheetId}:batchUpdate)
+- [ ] Create tool: `getValuesFromRange` (GET /v4/spreadsheets/{spreadsheetId}/values/{range})
+- [ ] Create tool: `batchGetValues` (GET /v4/spreadsheets/{spreadsheetId}/values:batchGet)
+- [ ] Create tool: `updateValuesInRange` (PUT /v4/spreadsheets/{spreadsheetId}/values/{range})
+- [ ] Create tool: `batchUpdateValues` (POST /v4/spreadsheets/{spreadsheetId}/values:batchUpdate)
+- [ ] Create tool: `appendValuesToRange` (POST /v4/spreadsheets/{spreadsheetId}/values/{range}:append)
+- [ ] Create tool: `clearValuesFromRange` (POST /v4/spreadsheets/{spreadsheetId}/values/{range}:clear)
+- [ ] Create tool: `batchClearValues` (POST /v4/spreadsheets/{spreadsheetId}/values:batchClear)
+- [ ] Create tool: `getSpreadsheetByDataFilter` (POST /v4/spreadsheets/{spreadsheetId}:getByDataFilter)
+- [ ] Create tool: `batchGetValuesByDataFilter` (POST /v4/spreadsheets/{spreadsheetId}/values:batchGetByDataFilter)
+- [ ] Create tool: `batchClearValuesByDataFilter` (POST /v4/spreadsheets/{spreadsheetId}/values:batchClearByDataFilter)
+- [ ] Create tool: `copySheetToSpreadsheet` (POST /v4/spreadsheets/{spreadsheetId}/sheets/{sheetId}:copyTo)
