@@ -24,3 +24,4 @@
 - [x] Refactor: Modify `src/index.ts` to be the primary HTTP API server, calling the internal Google Sheets API server.
 - [x] Create `src/mcp-server.ts` as the JSON-RPC over stdio protocol wrapper.
 - [x] Update `package.json` scripts for `start` and `mcp`.
+- [ ] Feature: Implement multi-user token storage using Firebase (email as unique ID).
