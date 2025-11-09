@@ -1,0 +1,141 @@
+name: Publish to MCP Registry
+
+on:
+  push:
+    tags:
+      - "v*"  # Triggers on version tags like v1.2.1
+  workflow_run:
+    workflows: ["Auto Tag and Publish"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC authentication
+      contents: read
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Fetch all history for tags when triggered by workflow_run
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "lts/*"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate server.json
+        run: npm run validate:server
+
+      - name: Run tests
+        run: npm run test --if-present
+
+      - name: Build package
+        run: npm run build --if-present
+
+      - name: Update versions from tag
+        id: version
+        run: |
+          # If triggered by workflow_run, get the tag from the triggering workflow
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            # Get the latest v1.x.x tag created by the auto-tag workflow
+            git fetch --tags
+            TAG=$(git tag -l "v1.*.*" | sort -V | tail -n 1)
+            VERSION=${TAG#v}
+            echo "Triggered by workflow_run, using latest tag: $TAG"
+          else
+            # Triggered by tag push
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "Triggered by tag push, using tag: v$VERSION"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          # Update package.json version (preserves all fields including mcpName)
+          npm version $VERSION --no-git-tag-version
+          # Update server.json versions using Node.js
+          node -e "
+            const fs = require('fs');
+            const server = JSON.parse(fs.readFileSync('server.json', 'utf8'));
+            server.version = '$VERSION';
+            server.packages[0].version = '$VERSION';
+            fs.writeFileSync('server.json', JSON.stringify(server, null, 2) + '\n');
+          "
+          # Verify mcpName exists in package.json
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            if (!pkg.mcpName) {
+              console.error('Error: mcpName field missing from package.json!');
+              process.exit(1);
+            }
+            console.log('✅ Verified mcpName exists:', pkg.mcpName);
+          "
+          echo "✅ Updated version to $VERSION"
+
+      - name: Validate server.json after version update
+        run: npm run validate:server
+
+      - name: Verify npm authentication
+        run: npm whoami
+        continue-on-error: true
+
+      - name: Verify package.json has mcpName before publishing
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            if (!pkg.mcpName) {
+              console.error('❌ Error: mcpName field missing from package.json!');
+              console.error('Current package.json:');
+              console.error(JSON.stringify(pkg, null, 2));
+              process.exit(1);
+            }
+            console.log('✅ Verified mcpName exists:', pkg.mcpName);
+            console.log('Expected:', 'io.github.Asthanaji05/pokeapi-mcp-server');
+            if (pkg.mcpName !== 'io.github.Asthanaji05/pokeapi-mcp-server') {
+              console.error('❌ Error: mcpName does not match expected value!');
+              process.exit(1);
+            }
+          "
+
+      - name: Publish to npm
+        run: npm publish
+
+      - name: Wait for npm registry to propagate
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Waiting for npm registry to propagate package metadata for version $VERSION..."
+          sleep 10
+          echo "Verifying published package has mcpName..."
+          for i in {1..5}; do
+            if npm view pokeapi-mcp-server@$VERSION mcpName 2>/dev/null | grep -q "io.github.Asthanaji05/pokeapi-mcp-server"; then
+              echo "✅ Package metadata confirmed on npm registry"
+              exit 0
+            fi
+            echo "Attempt $i: Package metadata not yet available, waiting..."
+            sleep 5
+          done
+          echo "⚠️  Warning: Could not verify mcpName on npm, but continuing..."
+
+      - name: Install MCP Publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Login to MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish to MCP Registry
+        run: ./mcp-publisher publish
+

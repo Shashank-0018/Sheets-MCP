@@ -1,0 +1,135 @@
+name: Test Tools
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches-ignore:
+      - 'gh-pages'  # Ignore gh-pages if you have one
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20.x"
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run testAllTools
+        id: test
+        run: |
+          npm run testAllTools || true
+          
+          # Check if any tests failed
+          if [ -f test-results.csv ]; then
+            # Count failures - handle case where grep returns nothing or no matches
+            FAILED_LINES=$(grep "FAILED" test-results.csv 2>/dev/null | wc -l || echo "0")
+            SERVER_ERROR_LINES=$(grep -E "502|503|504" test-results.csv 2>/dev/null | wc -l || echo "0")
+            
+            # Strip whitespace and ensure integers
+            FAILED_COUNT=$(echo "$FAILED_LINES" | tr -d '[:space:]')
+            SERVER_ERROR_COUNT=$(echo "$SERVER_ERROR_LINES" | tr -d '[:space:]')
+            
+            # Default to 0 if empty
+            [ -z "$FAILED_COUNT" ] && FAILED_COUNT=0
+            [ -z "$SERVER_ERROR_COUNT" ] && SERVER_ERROR_COUNT=0
+            
+            # Calculate other errors safely
+            OTHER_ERROR_COUNT=0
+            if [ "$FAILED_COUNT" -gt 0 ] && [ "$SERVER_ERROR_COUNT" -ge 0 ]; then
+              OTHER_ERROR_COUNT=$((FAILED_COUNT - SERVER_ERROR_COUNT))
+              # Ensure non-negative
+              [ "$OTHER_ERROR_COUNT" -lt 0 ] && OTHER_ERROR_COUNT=0
+            fi
+            
+            echo "📊 Test Analysis:"
+            echo "  - Total Failed: $FAILED_COUNT"
+            echo "  - Server Errors (502/503/504): $SERVER_ERROR_COUNT"
+            echo "  - Other Errors: $OTHER_ERROR_COUNT"
+            
+            if [ "$FAILED_COUNT" -gt 0 ]; then
+              if [ "$SERVER_ERROR_COUNT" -gt 0 ]; then
+                echo "⚠️  $SERVER_ERROR_COUNT failure(s) are server errors (502/503/504) - these may be transient"
+              fi
+              if [ "$OTHER_ERROR_COUNT" -gt 0 ]; then
+                echo "❌ $OTHER_ERROR_COUNT failure(s) are non-server errors - these need attention"
+                exit 1
+              else
+                echo "⚠️  All failures are server errors. Consider this a warning, not a failure."
+                echo "::warning::Server returned errors (502/503/504). This may be transient."
+              fi
+            else
+              echo "✅ All tests passed!"
+            fi
+          else
+            echo "⚠️  Test results file not found"
+            exit 1
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.csv
+          retention-days: 7
+
+      - name: Test Summary
+        if: always()
+        run: |
+          if [ -f test-results.csv ]; then
+            echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Results" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat test-results.csv | head -n 20 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            
+            # Count using wc -l instead of grep -c to avoid whitespace issues
+            PASSED_LINES=$(grep "PASSED" test-results.csv 2>/dev/null | wc -l || echo "0")
+            FAILED_LINES=$(grep "FAILED" test-results.csv 2>/dev/null | wc -l || echo "0")
+            
+            # Strip whitespace and ensure integers
+            PASSED=$(echo "$PASSED_LINES" | tr -d '[:space:]')
+            FAILED=$(echo "$FAILED_LINES" | tr -d '[:space:]')
+            
+            # Default to 0 if empty
+            [ -z "$PASSED" ] && PASSED=0
+            [ -z "$FAILED" ] && FAILED=0
+            
+            # Calculate total safely
+            TOTAL=0
+            if [ "$PASSED" -ge 0 ] && [ "$FAILED" -ge 0 ]; then
+              TOTAL=$((PASSED + FAILED))
+            fi
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total Tools Tested:** $TOTAL" >> $GITHUB_STEP_SUMMARY
+            echo "- **Passed:** $PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "- **Failed:** $FAILED" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$FAILED" -gt 0 ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### ❌ Failed Tools" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              grep "FAILED" test-results.csv >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            else
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### ✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+

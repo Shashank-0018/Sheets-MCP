@@ -1,0 +1,74 @@
+name: Auto Tag and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to create and push tags
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Calculate next version
+        id: next-version
+        run: |
+          # Fetch all tags
+          git fetch --tags
+          
+          # Get the latest v1.x.x tag
+          LATEST_TAG=$(git tag -l "v1.*.*" | sort -V | tail -n 1)
+          
+          if [ -z "$LATEST_TAG" ]; then
+            # No v1.x.x tags exist, start with v1.5.0
+            NEXT_MINOR=5
+            echo "No existing v1.x.x tags found, starting with v1.5.0"
+          else
+            # Extract minor version number from the tag (e.g., v1.5.0 -> 5)
+            MINOR=$(echo "$LATEST_TAG" | sed -E 's/v1\.([0-9]+)\..*/\1/')
+            echo "Latest tag: $LATEST_TAG (minor version: $MINOR)"
+            
+            # If latest minor version is less than 5, start from 5
+            if [ "$MINOR" -lt 5 ]; then
+              NEXT_MINOR=5
+            else
+              # Increment minor version
+              NEXT_MINOR=$((MINOR + 1))
+            fi
+          fi
+          
+          # Set patch to 0 and create next version
+          NEXT_VERSION="v1.$NEXT_MINOR.0"
+          
+          echo "Next version: $NEXT_VERSION"
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        run: |
+          NEXT_VERSION="${{ steps.next-version.outputs.next_version }}"
+          
+          # Check if tag already exists (shouldn't happen, but safety check)
+          if git rev-parse "$NEXT_VERSION" >/dev/null 2>&1; then
+            echo "⚠️  Tag $NEXT_VERSION already exists, skipping tag creation"
+            exit 0
+          fi
+          
+          # Create the tag
+          git tag "$NEXT_VERSION"
+          
+          # Push the tag (this will trigger publish-mcp.yml)
+          git push origin "$NEXT_VERSION"
+          
+          echo "✅ Created and pushed tag: $NEXT_VERSION"
+
