@@ -1,6 +1,31 @@
 import express from 'express';
-import { app, port } from './mcp-server';
+import bodyParser from 'body-parser';
+import { tools } from './tools';
+import apiRouter from './api';
 
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Middleware
+app.use(bodyParser.json());
+
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'MCP HTTP API Server is running!',
+    version: '1.0.0',
+  });
+});
+
+// List all available tools
+app.get('/tools', (req, res) => {
+  res.json(tools);
+});
+
+// API routes
+app.use('/api', apiRouter);
+
+// Start server
 app.listen(port, () => {
-  console.log(`MCP server listening at http://localhost:${port}`);
+  console.log(`MCP HTTP API Server is running on port ${port}`);
 });

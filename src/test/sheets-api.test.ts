@@ -1,7 +1,7 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
 import request from 'supertest';
-import { app } from '../mcp-server';
+import { app } from '../google-sheets-api-server';
 
 describe('Google Sheets API', () => {
   describe('GET /spreadsheets/:spreadsheetId/values/:range', () => {

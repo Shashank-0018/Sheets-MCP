@@ -4,7 +4,7 @@ import { OAuth2Client } from 'google-auth-library';
 import * as fs from 'fs';
 
 export const app = express();
-export const port = 3000;
+export const GOOGLE_SHEETS_API_SERVER_PORT = process.env.GOOGLE_SHEETS_API_SERVER_PORT || 3001; // Use a different port than the main HTTP API server
 
 app.use(express.json());
 
@@ -17,7 +17,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     web: {
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uris: [process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/callback']
+      redirect_uris: [process.env.GOOGLE_REDIRECT_URI || `http://localhost:${GOOGLE_SHEETS_API_SERVER_PORT}/callback`]
     }
   };
 } else {
@@ -44,68 +44,6 @@ async function authorize(): Promise<OAuth2Client> {
     throw new Error(`No token found. Please run the server and visit the OAuth URL to authenticate. Token file expected at: ${TOKEN_PATH}`);
   }
 }
-
-function getAccessToken(oAuth2Client: OAuth2Client): Promise<OAuth2Client> {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-  });
-  console.log('Authorize this app by visiting this URL:', authUrl);
-  console.log('After authorization, the token will be saved to', TOKEN_PATH);
-  
-  // Set up the callback route if it doesn't already exist
-  if (!app._router || !app._router.stack.some((layer: any) => layer.route?.path === '/oauth2callback')) {
-    app.get('/oauth2callback', async (req, res) => {
-      const code = req.query.code as string;
-      if (!code) {
-        res.status(400).send('Authorization code not found.');
-        return;
-      }
-      try {
-        const { tokens } = await oAuth2Client.getToken(code);
-        oAuth2Client.setCredentials(tokens);
-        fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
-        console.log('Token stored to', TOKEN_PATH);
-        res.send('Authentication successful! You can close this tab.');
-      } catch (err) {
-        console.error('Error retrieving access token', err);
-        res.status(500).send('Error retrieving access token.');
-      }
-    });
-  }
-  
-  return new Promise((resolve, reject) => {
-    // Set a timeout to reject if no callback happens
-    const timeout = setTimeout(() => {
-      reject(new Error('OAuth timeout: Please visit the authorization URL and complete the flow. Make sure the server is running.'));
-    }, 300000); // 5 minutes timeout
-    
-    app.get('/oauth2callback', async (req, res) => {
-      const code = req.query.code as string;
-      if (!code) {
-        res.status(400).send('Authorization code not found.');
-        clearTimeout(timeout);
-        return reject('Authorization code not found.');
-      }
-      try {
-        const { tokens } = await oAuth2Client.getToken(code);
-        oAuth2Client.setCredentials(tokens);
-        fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
-        console.log('Token stored to', TOKEN_PATH);
-        res.send('Authentication successful! You can close this tab.');
-        clearTimeout(timeout);
-        resolve(oAuth2Client);
-      } catch (err) {
-        console.error('Error retrieving access token', err);
-        res.status(500).send('Error retrieving access token.');
-        clearTimeout(timeout);
-        reject(err);
-      }
-    });
-  });
-}
-
-
 
 // OAuth callback handler - supports both /callback and /oauth2callback
 async function handleOAuthCallback(req: express.Request, res: express.Response) {
@@ -213,6 +151,80 @@ app.get('/fetch', async (req, res) => {
   }
 });
 
+app.post('/spreadsheets', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const response = await sheets.spreadsheets.create({
+            requestBody: req.body,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in POST /spreadsheets:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
+app.get('/spreadsheets/:spreadsheetId', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const response = await sheets.spreadsheets.get({
+            spreadsheetId: req.params.spreadsheetId,
+            ranges: req.query.ranges as string | string[] | undefined,
+            includeGridData: req.query.includeGridData === 'true',
+        });
+        // Await the response and access the data property correctly
+        const sheetResponse = await response;
+        res.json(sheetResponse.data);
+    } catch (error: any) {
+        console.error('Error in GET /spreadsheets/:spreadsheetId:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
+app.get('/spreadsheets/:spreadsheetId/values:batchGet', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const response = await sheets.spreadsheets.values.batchGet({
+            spreadsheetId: req.params.spreadsheetId,
+            ranges: req.query.ranges as string[],
+            majorDimension: req.query.majorDimension as string,
+            valueRenderOption: req.query.valueRenderOption as string,
+            dateTimeRenderOption: req.query.dateTimeRenderOption as string,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in GET /spreadsheets/:spreadsheetId/values:batchGet:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
 app.get('/spreadsheets/:spreadsheetId/values/:range', async (req, res) => {
     try {
         const auth = await authorize();
@@ -225,6 +237,82 @@ app.get('/spreadsheets/:spreadsheetId/values/:range', async (req, res) => {
         res.json(response.data);
     } catch (error: any) {
         console.error('Error in GET /spreadsheets/:spreadsheetId/values/:range:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
+app.put('/spreadsheets/:spreadsheetId/values/:range', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const range = decodeURIComponent(req.params.range);
+        const response = await sheets.spreadsheets.values.update({
+            spreadsheetId: req.params.spreadsheetId,
+            range: range,
+            valueInputOption: req.query.valueInputOption as string,
+            requestBody: req.body,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in PUT /spreadsheets/:spreadsheetId/values/:range:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
+app.post('/spreadsheets/:spreadsheetId/values:batchUpdate', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const response = await sheets.spreadsheets.values.batchUpdate({
+            spreadsheetId: req.params.spreadsheetId,
+            requestBody: req.body,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in POST /spreadsheets/:spreadsheetId/values:batchUpdate:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
+app.post('/spreadsheets/:spreadsheetId/values/:range:append', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const range = decodeURIComponent(req.params.range);
+        const response = await sheets.spreadsheets.values.append({
+            spreadsheetId: req.params.spreadsheetId,
+            range: range,
+            valueInputOption: req.query.valueInputOption as string,
+            insertDataOption: req.query.insertDataOption as string,
+            requestBody: req.body,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in POST /spreadsheets/:spreadsheetId/values/:range:append:', error);
         if (error.response) {
             res.status(error.response.status || 500).json({ 
                 error: error.response.data || error.message 
@@ -287,3 +375,11 @@ app.post('/spreadsheets/:spreadsheetId/sheets/:sheetId/copyTo', async (req, res)
         }
     }
 });
+
+// Start the server if this file is executed directly
+if (require.main === module) {
+  app.listen(GOOGLE_SHEETS_API_SERVER_PORT, () => {
+    console.log(`Google Sheets API internal server running on port ${GOOGLE_SHEETS_API_SERVER_PORT}`);
+  });
+}
+
