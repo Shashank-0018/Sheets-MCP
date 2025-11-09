@@ -1,0 +1,36 @@
+{
+  "name": "mcp-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "build": "tsc",
+    "test": "npm run build && mocha dist/test/sheets-api.test.js",
+    "test:watch": "tsc --watch & mocha --watch dist/test/sheets-api.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.1.0",
+    "googleapis": "^165.0.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/chai-http": "^3.0.5",
+    "@types/express": "^4.17.21",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.14.10",
+    "@types/supertest": "^6.0.3",
+    "chai": "^5.0.0",
+    "chai-http": "^5.1.2",
+    "mocha": "^9.2.2",
+    "nodemon": "^3.1.4",
+    "supertest": "^7.1.4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.5.3"
+  }
+}
