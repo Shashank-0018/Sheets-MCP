@@ -20,7 +20,7 @@
 - [x] Create tool: `batchGetValuesByDataFilter` (POST /v4/spreadsheets/{spreadsheetId}/values:batchGetByDataFilter)
 - [x] Create tool: `batchClearValuesByDataFilter` (POST /v4/spreadsheets/{spreadsheetId}/values:batchClearByDataFilter)
 - [x] Create tool: `copySheetToSpreadsheet` (POST /v4/spreadsheets/{spreadsheetId}/sheets/{sheetId}:copyTo)
-- [ ] Refactor: Move Google Sheets API and OAuth logic from `src/google-sheets-api-server.ts` to a dedicated internal API server.
-- [ ] Refactor: Modify `src/index.ts` to be the primary HTTP API server, calling the internal Google Sheets API server.
-- [ ] Create `src/mcp-server.ts` as the JSON-RPC over stdio protocol wrapper.
-- [ ] Update `package.json` scripts for `start` and `mcp`.
+- [x] Refactor: Move Google Sheets API and OAuth logic from `src/google-sheets-api-server.ts` to a dedicated internal API server.
+- [x] Refactor: Modify `src/index.ts` to be the primary HTTP API server, calling the internal Google Sheets API server.
+- [x] Create `src/mcp-server.ts` as the JSON-RPC over stdio protocol wrapper.
+- [x] Update `package.json` scripts for `start` and `mcp`.
