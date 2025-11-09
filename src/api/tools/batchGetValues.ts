@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 
+const GOOGLE_SHEETS_API_SERVER_URL = process.env.GOOGLE_SHEETS_API_SERVER_URL || 'http://localhost:3001';
+
 export const batchGetValuesTool = {
   name: 'batchGetValues',
   description: 'Returns one or more ranges of values from a spreadsheet.',
@@ -46,12 +48,7 @@ export const batchGetValuesHandler = async (req: Request, res: Response) => {
   }
 
   try {
-    const GOOGLE_SHEETS_API_KEY = process.env.GOOGLE_SHEETS_API_KEY; // Or ACCESS_TOKEN
-    if (!GOOGLE_SHEETS_API_KEY) {
-      return res.status(500).json({ error: 'Google Sheets API key not configured.' });
-    }
-
-    const params: any = { ranges: ranges.split(',') }; // Ranges can be multiple, comma-separated
+    const params: any = { ranges }; // Ranges can be multiple, comma-separated
     if (majorDimension) {
       params.majorDimension = majorDimension;
     }
@@ -63,11 +60,8 @@ export const batchGetValuesHandler = async (req: Request, res: Response) => {
     }
 
     const response = await axios.get(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchGet`,
+      `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values:batchGet`,
       {
-        headers: {
-          'Authorization': `Bearer ${GOOGLE_SHEETS_API_KEY}`, // Assuming Bearer token for auth
-        },
         params: params,
       }
     );
@@ -76,10 +70,10 @@ export const batchGetValuesHandler = async (req: Request, res: Response) => {
   } catch (error: any) {
     if (error.response) {
       res.status(error.response.status).json({
-        error: error.response.data?.error?.message || 'Google Sheets API request failed',
+        error: error.response.data?.error?.message || 'Internal Google Sheets API server request failed',
       });
     } else {
-      res.status(500).json({ error: 'Failed to batch get values via Google Sheets API' });
+      res.status(500).json({ error: 'Failed to batch get values via internal Google Sheets API server' });
     }
   }
 };

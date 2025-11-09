@@ -325,17 +325,131 @@ app.post('/spreadsheets/:spreadsheetId/values/:range:append', async (req, res) =
     }
 });
 
+app.post('/spreadsheets/:spreadsheetId/values/:range:clear', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const range = decodeURIComponent(req.params.range);
+        const response = await sheets.spreadsheets.values.clear({
+            spreadsheetId: req.params.spreadsheetId,
+            range: range,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in POST /spreadsheets/:spreadsheetId/values/:range:clear:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({
+                error: error.response.data || error.message
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
+app.post('/spreadsheets/:spreadsheetId/values:batchClear', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const response = await sheets.spreadsheets.values.batchClear({
+            spreadsheetId: req.params.spreadsheetId,
+            requestBody: req.body,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in POST /spreadsheets/:spreadsheetId/values:batchClear:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
+app.post('/spreadsheets/:spreadsheetId/getByDataFilter', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const response = await sheets.spreadsheets.getByDataFilter({
+            spreadsheetId: req.params.spreadsheetId,
+            requestBody: req.body,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in POST /spreadsheets/:spreadsheetId/getByDataFilter:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
+app.post('/spreadsheets/:spreadsheetId/values:batchGetByDataFilter', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const response = await sheets.spreadsheets.values.batchGetByDataFilter({
+            spreadsheetId: req.params.spreadsheetId,
+            requestBody: req.body,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in POST /spreadsheets/:spreadsheetId/values:batchGetByDataFilter:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
+app.post('/spreadsheets/:spreadsheetId/values:batchClearByDataFilter', async (req, res) => {
+    try {
+        const auth = await authorize();
+        const sheets = google.sheets({ version: 'v4', auth });
+        const response = await sheets.spreadsheets.values.batchClearByDataFilter({
+            spreadsheetId: req.params.spreadsheetId,
+            requestBody: req.body,
+        });
+        res.json(response.data);
+    } catch (error: any) {
+        console.error('Error in POST /spreadsheets/:spreadsheetId/values:batchClearByDataFilter:', error);
+        if (error.response) {
+            res.status(error.response.status || 500).json({ 
+                error: error.response.data || error.message 
+            });
+        } else if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred' });
+        }
+    }
+});
+
 app.post('/spreadsheets/:spreadsheetId/batchUpdate', async (req, res) => {
     try {
         const auth = await authorize();
         const sheets = google.sheets({ version: 'v4', auth });
-        const response = await sheets.spreadsheets.batchUpdate({
+        const batchUpdateResponse = await sheets.spreadsheets.batchUpdate({
             spreadsheetId: req.params.spreadsheetId,
-            requestBody: {
-                requests: req.body.requests,
-            },
+            requestBody: req.body,
         });
-        res.json(response.data);
+        res.json(batchUpdateResponse.data);
     } catch (error: any) {
         console.error('Error in POST /spreadsheets/:spreadsheetId/batchUpdate:', error);
         if (error.response) {

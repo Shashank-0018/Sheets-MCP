@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 
+const GOOGLE_SHEETS_API_SERVER_URL = process.env.GOOGLE_SHEETS_API_SERVER_URL || 'http://localhost:3001';
+
 export const clearValuesFromRangeTool = {
   name: 'clearValuesFromRange',
   description: 'Clears values from a spreadsheet.',
@@ -31,18 +33,12 @@ export const clearValuesFromRangeHandler = async (req: Request, res: Response) =
   }
 
   try {
-    const GOOGLE_SHEETS_API_KEY = process.env.GOOGLE_SHEETS_API_KEY; // Or ACCESS_TOKEN
-    if (!GOOGLE_SHEETS_API_KEY) {
-      return res.status(500).json({ error: 'Google Sheets API key not configured.' });
-    }
-
     // The clear endpoint typically expects an empty request body
     const response = await axios.post(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}:clear`,
+      `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values/${range}:clear`,
       {}, // Empty body
       {
         headers: {
-          'Authorization': `Bearer ${GOOGLE_SHEETS_API_KEY}`, // Assuming Bearer token for auth
           'Content-Type': 'application/json',
         },
       }
@@ -52,10 +48,10 @@ export const clearValuesFromRangeHandler = async (req: Request, res: Response) =
   } catch (error: any) {
     if (error.response) {
       res.status(error.response.status).json({
-        error: error.response.data?.error?.message || 'Google Sheets API request failed',
+        error: error.response.data?.error?.message || 'Internal Google Sheets API server request failed',
       });
     } else {
-      res.status(500).json({ error: 'Failed to clear values from range via Google Sheets API' });
+      res.status(500).json({ error: 'Failed to clear values from range via internal Google Sheets API server' });
     }
   }
 };

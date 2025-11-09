@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 
+const GOOGLE_SHEETS_API_SERVER_URL = process.env.GOOGLE_SHEETS_API_SERVER_URL || 'http://localhost:3001';
+
 export const getSpreadsheetByIdTool = {
   name: 'getSpreadsheetById',
   description: 'Returns the spreadsheet at the given ID.',
@@ -32,11 +34,6 @@ export const getSpreadsheetByIdHandler = async (req: Request, res: Response) => 
   }
 
   try {
-    const GOOGLE_SHEETS_API_KEY = process.env.GOOGLE_SHEETS_API_KEY; // Or ACCESS_TOKEN
-    if (!GOOGLE_SHEETS_API_KEY) {
-      return res.status(500).json({ error: 'Google Sheets API key not configured.' });
-    }
-
     const params: any = {};
     if (ranges) {
       params.ranges = ranges;
@@ -46,11 +43,8 @@ export const getSpreadsheetByIdHandler = async (req: Request, res: Response) => 
     }
 
     const response = await axios.get(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`,
+      `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}`,
       {
-        headers: {
-          'Authorization': `Bearer ${GOOGLE_SHEETS_API_KEY}`, // Assuming Bearer token for auth
-        },
         params: params,
       }
     );
@@ -59,10 +53,10 @@ export const getSpreadsheetByIdHandler = async (req: Request, res: Response) => 
   } catch (error: any) {
     if (error.response) {
       res.status(error.response.status).json({
-        error: error.response.data?.error?.message || 'Google Sheets API request failed',
+        error: error.response.data?.error?.message || 'Internal Google Sheets API server request failed',
       });
     } else {
-      res.status(500).json({ error: 'Failed to get spreadsheet via Google Sheets API' });
+      res.status(500).json({ error: 'Failed to get spreadsheet via internal Google Sheets API server' });
     }
   }
 };

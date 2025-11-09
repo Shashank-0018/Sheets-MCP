@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 
+const GOOGLE_SHEETS_API_SERVER_URL = process.env.GOOGLE_SHEETS_API_SERVER_URL || 'http://localhost:3001';
+
 export const batchClearValuesTool = {
   name: 'batchClearValues',
   description: 'Clears one or more ranges of values from a spreadsheet.',
@@ -34,17 +36,11 @@ export const batchClearValuesHandler = async (req: Request, res: Response) => {
   }
 
   try {
-    const GOOGLE_SHEETS_API_KEY = process.env.GOOGLE_SHEETS_API_KEY; // Or ACCESS_TOKEN
-    if (!GOOGLE_SHEETS_API_KEY) {
-      return res.status(500).json({ error: 'Google Sheets API key not configured.' });
-    }
-
     const response = await axios.post(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchClear`,
+      `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values:batchClear`,
       { ranges },
       {
         headers: {
-          'Authorization': `Bearer ${GOOGLE_SHEETS_API_KEY}`, // Assuming Bearer token for auth
           'Content-Type': 'application/json',
         },
       }
@@ -54,10 +50,10 @@ export const batchClearValuesHandler = async (req: Request, res: Response) => {
   } catch (error: any) {
     if (error.response) {
       res.status(error.response.status).json({
-        error: error.response.data?.error?.message || 'Google Sheets API request failed',
+        error: error.response.data?.error?.message || 'Internal Google Sheets API server request failed',
       });
     } else {
-      res.status(500).json({ error: 'Failed to batch clear values via Google Sheets API' });
+      res.status(500).json({ error: 'Failed to batch clear values via internal Google Sheets API server' });
     }
   }
 };

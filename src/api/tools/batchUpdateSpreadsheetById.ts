@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 
+const GOOGLE_SHEETS_API_SERVER_URL = process.env.GOOGLE_SHEETS_API_SERVER_URL || 'http://localhost:3001';
+
 export const batchUpdateSpreadsheetByIdTool = {
   name: 'batchUpdateSpreadsheetById',
   description: 'Applies one or more updates to the spreadsheet.',
@@ -35,17 +37,11 @@ export const batchUpdateSpreadsheetByIdHandler = async (req: Request, res: Respo
   }
 
   try {
-    const GOOGLE_SHEETS_API_KEY = process.env.GOOGLE_SHEETS_API_KEY; // Or ACCESS_TOKEN
-    if (!GOOGLE_SHEETS_API_KEY) {
-      return res.status(500).json({ error: 'Google Sheets API key not configured.' });
-    }
-
     const response = await axios.post(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+      `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/batchUpdate`,
       { requests },
       {
         headers: {
-          'Authorization': `Bearer ${GOOGLE_SHEETS_API_KEY}`, // Assuming Bearer token for auth
           'Content-Type': 'application/json',
         },
       }
@@ -55,10 +51,10 @@ export const batchUpdateSpreadsheetByIdHandler = async (req: Request, res: Respo
   } catch (error: any) {
     if (error.response) {
       res.status(error.response.status).json({
-        error: error.response.data?.error?.message || 'Google Sheets API request failed',
+        error: error.response.data?.error?.message || 'Internal Google Sheets API server request failed',
       });
     } else {
-      res.status(500).json({ error: 'Failed to batch update spreadsheet via Google Sheets API' });
+      res.status(500).json({ error: 'Failed to batch update spreadsheet via internal Google Sheets API server' });
     }
   }
 };
