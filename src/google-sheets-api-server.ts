@@ -296,7 +296,7 @@ app.post('/spreadsheets/:spreadsheetId/values:batchUpdate', async (req, res) => 
     }
 });
 
-app.post('/spreadsheets/:spreadsheetId/values/:range:append', async (req, res) => {
+app.post('/spreadsheets/:spreadsheetId/values/:range/append', async (req, res) => {
     try {
         const auth = await authorize();
         const sheets = google.sheets({ version: 'v4', auth });
@@ -323,7 +323,7 @@ app.post('/spreadsheets/:spreadsheetId/values/:range:append', async (req, res) =
     }
 });
 
-app.post('/spreadsheets/:spreadsheetId/values/:range:clear', async (req, res) => {
+app.post('/spreadsheets/:spreadsheetId/values/:range/clear', async (req, res) => {
     try {
         const auth = await authorize();
         const sheets = google.sheets({ version: 'v4', auth });
