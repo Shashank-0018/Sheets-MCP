@@ -3,9 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "mcp-server": "dist/mcp-server.js"
+  },
   "scripts": {
-    "start": "ts-node src/index.ts",
+    "start": "npm-run-all --parallel start:main start:sheets",
+    "start:main": "ts-node src/index.ts",
+    "start:sheets": "ts-node src/google-sheets-api-server.ts",
     "build": "tsc",
+    "mcp": "ts-node src/mcp-server.ts",
     "test": "npm run build && mocha dist/test/sheets-api.test.js",
     "test:watch": "tsc --watch & mocha --watch dist/test/sheets-api.test.js"
   },
