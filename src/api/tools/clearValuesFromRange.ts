@@ -35,7 +35,7 @@ export const clearValuesFromRangeHandler = async (req: Request, res: Response) =
   try {
     // The clear endpoint typically expects an empty request body
     const response = await axios.post(
-      `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values/${range}:clear`,
+      `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values/${range}/clear`,
       {}, // Empty body
       {
         headers: {

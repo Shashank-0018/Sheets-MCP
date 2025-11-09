@@ -65,7 +65,7 @@ export const appendValuesToRangeHandler = async (req: Request, res: Response) =>
     }
 
     const response = await axios.post(
-      `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values/${range}:append`,
+      `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values/${range}/append`,
       { values },
       {
         headers: {
