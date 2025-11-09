@@ -31,3 +31,4 @@ dist-ssr
 temp/*
 .mcpregistry_*
 mcp-publisher.exe
+secrets.json
