@@ -179,12 +179,10 @@ app.get('/spreadsheets/:spreadsheetId', async (req, res) => {
         const sheets = google.sheets({ version: 'v4', auth });
         const response = await sheets.spreadsheets.get({
             spreadsheetId: req.params.spreadsheetId,
-            ranges: req.query.ranges as string | string[] | undefined,
+            ranges: typeof req.query.ranges === 'string' ? [req.query.ranges] : req.query.ranges as string[] | undefined,
             includeGridData: req.query.includeGridData === 'true',
         });
-        // Await the response and access the data property correctly
-        const sheetResponse = await response;
-        res.json(sheetResponse.data);
+        res.json(response.data);
     } catch (error: any) {
         console.error('Error in GET /spreadsheets/:spreadsheetId:', error);
         if (error.response) {
@@ -302,7 +300,7 @@ app.post('/spreadsheets/:spreadsheetId/values/:range:append', async (req, res) =
     try {
         const auth = await authorize();
         const sheets = google.sheets({ version: 'v4', auth });
-        const range = decodeURIComponent(req.params.range);
+        const range = decodeURIComponent((req.params as any).range);
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: req.params.spreadsheetId,
             range: range,
@@ -329,7 +327,7 @@ app.post('/spreadsheets/:spreadsheetId/values/:range:clear', async (req, res) =>
     try {
         const auth = await authorize();
         const sheets = google.sheets({ version: 'v4', auth });
-        const range = decodeURIComponent(req.params.range);
+        const range = decodeURIComponent((req.params as any).range);
         const response = await sheets.spreadsheets.values.clear({
             spreadsheetId: req.params.spreadsheetId,
             range: range,
