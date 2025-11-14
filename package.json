@@ -13,6 +13,7 @@
     "build": "tsc",
     "mcp": "ts-node src/mcp-server.ts",
     "test": "npm run build && mocha dist/test/sheets-api.test.js",
+    "auth": "ts-node src/google-sheets-api-server.ts",
     "test:watch": "tsc --watch & mocha --watch dist/test/sheets-api.test.js"
   },
   "keywords": [],
