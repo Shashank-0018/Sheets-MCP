@@ -1,4 +1,5 @@
 import express from 'express';
+import { tools } from './tools';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import * as fs from 'fs';
@@ -149,6 +150,10 @@ app.get('/fetch', async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   }
+});
+
+app.get('/tools', (req, res) => {
+  res.json(tools);
 });
 
 app.post('/spreadsheets', async (req, res) => {

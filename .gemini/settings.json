@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "google-sheets": {
+      "command": "node",
+      "args": ["dist/mcp-server.js"],
+      "transport": "stdio",
+      "trust": true,
+      "env": {
+        "MCP_HTTP_SERVER_URL": "http://localhost:3000"
+      }
+    }
+  }
+}
