@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 
-const GOOGLE_SHEETS_API_SERVER_URL = process.env.GOOGLE_SHEETS_API_SERVER_URL ;
-
+import { GOOGLE_SHEETS_API_SERVER_URL } from '../config';
 export const batchGetValuesByDataFilterTool = {
   name: 'batchGetValuesByDataFilter',
   description: 'Returns one or more ranges of values that match the specified data filters.',
