@@ -488,7 +488,8 @@ app.post('/spreadsheets', async (req, res) => {
 
 app.get('/spreadsheets/:spreadsheetId', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const response = await sheets.spreadsheets.get({
       spreadsheetId: req.params.spreadsheetId,
@@ -512,7 +513,8 @@ app.get('/spreadsheets/:spreadsheetId', async (req, res) => {
 
 app.get('/spreadsheets/:spreadsheetId/values:batchGet', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const response = await sheets.spreadsheets.values.batchGet({
       spreadsheetId: req.params.spreadsheetId,
@@ -538,7 +540,8 @@ app.get('/spreadsheets/:spreadsheetId/values:batchGet', async (req, res) => {
 
 app.get('/spreadsheets/:spreadsheetId/values/:range', async (req, res) => {
   try {
-    const auth = await authorize();
+        const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);;
     const sheets = google.sheets({ version: 'v4', auth });
     const range = decodeURIComponent(req.params.range);
     const response = await sheets.spreadsheets.values.get({
@@ -562,7 +565,8 @@ app.get('/spreadsheets/:spreadsheetId/values/:range', async (req, res) => {
 
 app.put('/spreadsheets/:spreadsheetId/values/:range', async (req, res) => {
   try {
-    const auth = await authorize();
+        const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);;
     const sheets = google.sheets({ version: 'v4', auth });
     const range = decodeURIComponent(req.params.range);
     const response = await sheets.spreadsheets.values.update({
@@ -588,7 +592,8 @@ app.put('/spreadsheets/:spreadsheetId/values/:range', async (req, res) => {
 
 app.post('/spreadsheets/:spreadsheetId/values:batchUpdate', async (req, res) => {
   try {
-    const auth = await authorize();
+        const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);;
     const sheets = google.sheets({ version: 'v4', auth });
     const response = await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: req.params.spreadsheetId,
