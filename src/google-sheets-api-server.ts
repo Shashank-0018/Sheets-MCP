@@ -137,7 +137,10 @@ async function authorize(userId?: string): Promise<OAuth2Client> {
 
   // Use multi-user token storage if Supabase is configured
   const useMultiUser = isSupabaseConfigured();
-  const targetUserId = userId || 'default_user';
+  if (!userId) {
+    throw new Error('User ID is required for authorization. Please ensure you are authenticated.');
+  }
+  const targetUserId = userId;
 
   let token: TokenData | null = null;
 
@@ -608,7 +611,8 @@ app.post('/spreadsheets/:spreadsheetId/values:batchUpdate', async (req, res) => 
 
 app.post('/spreadsheets/:spreadsheetId/values/:range/append', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const range = decodeURIComponent((req.params as any).range);
     const response = await sheets.spreadsheets.values.append({
@@ -635,7 +639,8 @@ app.post('/spreadsheets/:spreadsheetId/values/:range/append', async (req, res) =
 
 app.post('/spreadsheets/:spreadsheetId/values/:range/clear', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const range = decodeURIComponent((req.params as any).range);
     const response = await sheets.spreadsheets.values.clear({
@@ -659,7 +664,8 @@ app.post('/spreadsheets/:spreadsheetId/values/:range/clear', async (req, res) =>
 
 app.post('/spreadsheets/:spreadsheetId/values:batchClear', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const response = await sheets.spreadsheets.values.batchClear({
       spreadsheetId: req.params.spreadsheetId,
@@ -682,7 +688,8 @@ app.post('/spreadsheets/:spreadsheetId/values:batchClear', async (req, res) => {
 
 app.post('/spreadsheets/:spreadsheetId/getByDataFilter', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const response = await sheets.spreadsheets.getByDataFilter({
       spreadsheetId: req.params.spreadsheetId,
@@ -705,7 +712,8 @@ app.post('/spreadsheets/:spreadsheetId/getByDataFilter', async (req, res) => {
 
 app.post('/spreadsheets/:spreadsheetId/values:batchGetByDataFilter', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const response = await sheets.spreadsheets.values.batchGetByDataFilter({
       spreadsheetId: req.params.spreadsheetId,
@@ -728,7 +736,8 @@ app.post('/spreadsheets/:spreadsheetId/values:batchGetByDataFilter', async (req,
 
 app.post('/spreadsheets/:spreadsheetId/values:batchClearByDataFilter', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const response = await sheets.spreadsheets.values.batchClearByDataFilter({
       spreadsheetId: req.params.spreadsheetId,
@@ -751,7 +760,8 @@ app.post('/spreadsheets/:spreadsheetId/values:batchClearByDataFilter', async (re
 
 app.post('/spreadsheets/:spreadsheetId/batchUpdate', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const batchUpdateResponse = await sheets.spreadsheets.batchUpdate({
       spreadsheetId: req.params.spreadsheetId,
@@ -774,7 +784,8 @@ app.post('/spreadsheets/:spreadsheetId/batchUpdate', async (req, res) => {
 
 app.post('/spreadsheets/:spreadsheetId/sheets/:sheetId/copyTo', async (req, res) => {
   try {
-    const auth = await authorize();
+    const userId = getUserIdFromRequest(req);
+    const auth = await authorize(userId);
     const sheets = google.sheets({ version: 'v4', auth });
     const sheetId = parseInt(req.params.sheetId, 10);
     if (isNaN(sheetId)) {

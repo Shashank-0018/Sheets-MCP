@@ -26,9 +26,9 @@ export async function mcpAuthMiddleware(
 ): Promise<void> {
   // Extract Bearer token from Authorization header
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ 
+    res.status(401).json({
       error: 'Unauthorized. Missing or invalid Authorization header.',
       hint: 'Include Authorization: Bearer <token> header'
     });
@@ -43,28 +43,29 @@ export async function mcpAuthMiddleware(
     // Single-user mode: use simple token comparison
     if (!expectedToken) {
       if (process.env.NODE_ENV === 'production') {
-        res.status(500).json({ 
-          error: 'MCP authentication not configured. Set MCP_TOKEN environment variable.' 
+        res.status(500).json({
+          error: 'MCP authentication not configured. Set MCP_TOKEN environment variable.'
         });
         return;
       }
       // Development mode: allow requests without token
       console.warn('⚠️  MCP_TOKEN not set - allowing unauthenticated requests (development mode)');
-      (req as AuthenticatedRequest).userId = 'default_user';
+      console.log('   DEBUG: Falling back to default_user because Supabase is not configured and no MCP_TOKEN set');
+    // (req as AuthenticatedRequest).userId = 'default_user'; // Disabled default_user fallback
       next();
       return;
     }
 
     // Secure token comparison (constant-time comparison to prevent timing attacks)
     if (!secureTokenCompare(providedToken, expectedToken)) {
-      res.status(403).json({ 
+      res.status(403).json({
         error: 'Forbidden. Invalid MCP token.'
       });
       return;
     }
 
     // Single-user mode: use default user
-    (req as AuthenticatedRequest).userId = 'default_user';
+    // (req as AuthenticatedRequest).userId = 'default_user'; // Disabled default_user fallback
     (req as AuthenticatedRequest).mcpToken = providedToken;
     next();
     return;
@@ -74,9 +75,9 @@ export async function mcpAuthMiddleware(
   // Users are automatically created when they complete OAuth (using their email)
   try {
     const userId = await tokenStorage.getUserIdFromMcpToken(providedToken);
-    
+
     if (!userId) {
-      res.status(403).json({ 
+      res.status(403).json({
         error: 'Forbidden. Invalid MCP token or user not found.',
         hint: 'Please complete OAuth authentication first. Visit /auth/url to get the OAuth URL. Your user account will be created automatically from your Google email.'
       });
@@ -89,7 +90,7 @@ export async function mcpAuthMiddleware(
     next();
   } catch (error: any) {
     console.error('Error in MCP auth middleware:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal authentication error.'
     });
   }
@@ -102,12 +103,12 @@ function secureTokenCompare(a: string, b: string): boolean {
   if (a.length !== b.length) {
     return false;
   }
-  
+
   let result = 0;
   for (let i = 0; i < a.length; i++) {
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
-  
+
   return result === 0;
 }
 

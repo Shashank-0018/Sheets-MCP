@@ -37,6 +37,10 @@ if (DATABASE_URL && !SUPABASE_URL) {
 
 if (!resolvedSupabaseUrl || !resolvedServiceRoleKey) {
   console.warn('⚠️  Supabase not fully configured.');
+  console.log('   DEBUG: SUPABASE_URL present:', !!resolvedSupabaseUrl);
+  console.log('   DEBUG: SUPABASE_SERVICE_ROLE_KEY present:', !!resolvedServiceRoleKey);
+  console.log('   DEBUG: DATABASE_URL present:', !!DATABASE_URL);
+
   if (!resolvedSupabaseUrl) {
     console.warn('   Set SUPABASE_URL or provide DATABASE_URL environment variable.');
   }
@@ -44,17 +48,20 @@ if (!resolvedSupabaseUrl || !resolvedServiceRoleKey) {
     console.warn('   Set SUPABASE_SERVICE_ROLE_KEY environment variable.');
   }
   console.warn('   Multi-user token storage will not be available. Falling back to single-user mode.');
+} else {
+  console.log('✅ Supabase configured successfully for multi-user mode.');
+  console.log('   URL:', resolvedSupabaseUrl);
 }
 
 // Create Supabase client with service role key (for server-side operations)
 // Service role key bypasses RLS - we handle isolation at application level
 export const supabase: SupabaseClient | null = resolvedSupabaseUrl && resolvedServiceRoleKey
   ? createClient(resolvedSupabaseUrl, resolvedServiceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
   : null;
 
 /**

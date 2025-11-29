@@ -17,7 +17,7 @@ export function getUserIdFromRequest(req: Request): string {
 
   // Fall back to header (for Google Sheets API server)
   const userId = req.headers['x-user-id'] as string;
-  return userId || 'default_user';
+  return userId;
 }
 
 /**
