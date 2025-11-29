@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-
 import { GOOGLE_SHEETS_API_SERVER_URL } from '../config';
+import { createHeadersWithUserId } from '../../utils/userIdHelper';
 export const batchClearValuesByDataFilterTool = {
   name: 'batchClearValuesByDataFilter',
   description: 'Clears one or more ranges of values from a spreadsheet using data filters.',
@@ -40,9 +40,7 @@ export const batchClearValuesByDataFilterHandler = async (req: Request, res: Res
       `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values:batchClearByDataFilter`,
       { dataFilters },
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createHeadersWithUserId(req),
       }
     );
 

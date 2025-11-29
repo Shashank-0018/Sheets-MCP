@@ -1,4 +1,5 @@
 import express from 'express';
+import { mcpAuthMiddleware } from '../middleware/auth';
 import { createSpreadsheetHandler } from './tools/createSpreadsheet';
 import { getSpreadsheetByIdHandler } from './tools/getSpreadsheetById';
 import { batchUpdateSpreadsheetByIdHandler } from './tools/batchUpdateSpreadsheetById';
@@ -15,6 +16,10 @@ import { batchClearValuesByDataFilterHandler } from './tools/batchClearValuesByD
 import { copySheetToSpreadsheetHandler } from './tools/copySheetToSpreadsheet';
 
 const router = express.Router();
+
+// Apply MCP Bearer token authentication to all API routes
+// Best Practice: Enforce MCP Bearer token auth for all tool endpoints
+router.use(mcpAuthMiddleware);
 
 router.post('/tools/createSpreadsheet', createSpreadsheetHandler);
 router.post('/tools/getSpreadsheetById', getSpreadsheetByIdHandler);

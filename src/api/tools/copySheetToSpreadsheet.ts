@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-
 import { GOOGLE_SHEETS_API_SERVER_URL } from '../config';
+import { createHeadersWithUserId } from '../../utils/userIdHelper';
 export const copySheetToSpreadsheetTool = {
   name: 'copySheetToSpreadsheet',
   description: 'Copies a sheet from one spreadsheet to another.',
@@ -43,9 +43,7 @@ export const copySheetToSpreadsheetHandler = async (req: Request, res: Response)
       `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/sheets/${sheetId}:copyTo`,
       { destinationSpreadsheetId },
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createHeadersWithUserId(req),
       }
     );
 

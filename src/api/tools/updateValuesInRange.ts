@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-
 import { GOOGLE_SHEETS_API_SERVER_URL } from '../config';
+import { createHeadersWithUserId } from '../../utils/userIdHelper';
 
 export const updateValuesInRangeTool = {
   name: 'updateValuesInRange',
@@ -58,9 +58,7 @@ export const updateValuesInRangeHandler = async (req: Request, res: Response) =>
       `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values/${range}?valueInputOption=${valueInputOption}`,
       { values },
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createHeadersWithUserId(req),
       }
     );
 

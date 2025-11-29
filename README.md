@@ -118,7 +118,9 @@ This command uses `npm-run-all` to run `start:main` (port 3000) and `start:sheet
 
 ## Google Sheets API Authorization
 
-The internal Google Sheets API server requires OAuth2 authorization to interact with Google Sheets.
+The internal Google Sheets API server requires OAuth2 authorization to interact with Google Sheets. Tokens are now stored in **memory cache** (similar to Gemini CLI) instead of files, with automatic token refresh when expired.
+
+### Method 1: OAuth Flow (Recommended for First-Time Setup)
 
 1.  **Start the servers:** Ensure both servers are running using `npm start`.
 2.  **Get Authorization URL:** Access the `/auth/url` endpoint of the internal server:
@@ -127,7 +129,89 @@ The internal Google Sheets API server requires OAuth2 authorization to interact 
     ```
     This will return a JSON object containing an `authUrl`.
 3.  **Authorize in Browser:** Open the `authUrl` in your web browser. Grant the necessary permissions to your Google account.
-4.  **Token Storage:** After successful authorization, Google will redirect to `http://localhost:3001/callback`, and the server will save the OAuth tokens to a `token.json` file in the project root.
+4.  **Token Storage:** After successful authorization, Google will redirect to `http://localhost:3001/callback`, and the server will **cache the OAuth tokens in memory**. The token is automatically refreshed when expired using the refresh token.
+
+### Method 2: Environment Variable (For MCP Configuration)
+
+You can provide the access token directly via the `GOOGLE_ACCESS_TOKEN` environment variable. This is useful for MCP configurations or automated deployments.
+
+**Option A: Set as system environment variable (recommended for MCP):**
+```bash
+# Set the token as a JSON string
+export GOOGLE_ACCESS_TOKEN='{"access_token":"...","refresh_token":"...","expiry_date":1234567890,"token_type":"Bearer"}'
+
+# Or set just the access token (less secure, no auto-refresh)
+export GOOGLE_ACCESS_TOKEN="your_access_token_here"
+
+# Then start the server
+npm start
+```
+
+**Option B: Set in MCP configuration:**
+The token can be passed through the MCP server's environment, but note that the Google Sheets API server (port 3001) needs access to it. Set it when starting the server:
+
+```json
+{
+  "mcpServers": {
+    "google-sheets": {
+      "command": "node",
+      "args": ["dist/mcp-server.js"],
+      "transport": "stdio",
+      "trust": true,
+      "env": {
+        "MCP_HTTP_SERVER_URL": "http://localhost:3000",
+        "GOOGLE_ACCESS_TOKEN": "your_token_json_here"
+      }
+    }
+  }
+}
+```
+
+**Note:** When using environment variables, make sure to set `GOOGLE_ACCESS_TOKEN` before starting the server with `npm start`, as the Google Sheets API server runs as a separate process.
+
+### MCP Bearer Token Authentication
+
+The MCP HTTP API server (port 3000) requires Bearer token authentication for all tool endpoints. This is **separate** from Google OAuth tokens and provides an additional security layer.
+
+**Setting up MCP Token:**
+
+1. **Generate a secure token** (e.g., using `openssl rand -hex 32` or any secure random generator)
+2. **Set as environment variable:**
+   ```bash
+   export MCP_TOKEN="your_secure_token_here"
+   npm start
+   ```
+
+3. **Or set in MCP configuration:**
+   ```json
+   {
+     "mcpServers": {
+       "google-sheets": {
+         "command": "node",
+         "args": ["dist/mcp-server.js"],
+         "transport": "stdio",
+         "trust": true,
+         "env": {
+           "MCP_HTTP_SERVER_URL": "http://localhost:3000",
+           "MCP_TOKEN": "your_secure_token_here"
+         }
+       }
+     }
+   }
+   ```
+
+**Note:** In development mode, if `MCP_TOKEN` is not set, requests are allowed (with a warning). In production (`NODE_ENV=production`), `MCP_TOKEN` is required.
+
+### Token Management Features
+
+- ✅ **In-Memory Cache:** Tokens are stored in memory (no `token.json` file required)
+- ✅ **Automatic Refresh:** Tokens are automatically refreshed when expired using the refresh token
+- ✅ **Backward Compatible:** Still supports `token.json` file for migration
+- ✅ **Environment Variable Support:** Can be set via `GOOGLE_ACCESS_TOKEN` env var
+- ✅ **Expiration Checking:** Tokens are checked for expiration before use (5-minute buffer)
+- ✅ **MCP Bearer Auth:** API endpoints protected with Bearer token authentication
+- ✅ **Secure Error Handling:** Error messages sanitized to prevent token/credential leakage
+- ✅ **Token Cleanup:** Invalid tokens automatically cleared from cache on errors
 
 ## MCP Server Usage
 

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-
 import { GOOGLE_SHEETS_API_SERVER_URL } from '../config';
+import { createHeadersWithUserId } from '../../utils/userIdHelper';
 export const batchUpdateSpreadsheetByIdTool = {
   name: 'batchUpdateSpreadsheetById',
   description: 'Applies one or more updates to the spreadsheet.',
@@ -40,9 +40,7 @@ export const batchUpdateSpreadsheetByIdHandler = async (req: Request, res: Respo
       `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/batchUpdate`,
       { requests },
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createHeadersWithUserId(req),
       }
     );
 

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-
 import { GOOGLE_SHEETS_API_SERVER_URL } from '../config';
+import { createHeadersWithUserId } from '../../utils/userIdHelper';
 export const clearValuesFromRangeTool = {
   name: 'clearValuesFromRange',
   description: 'Clears values from a spreadsheet.',
@@ -37,9 +37,7 @@ export const clearValuesFromRangeHandler = async (req: Request, res: Response) =
       `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values/${range}/clear`,
       {}, // Empty body
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createHeadersWithUserId(req),
       }
     );
 

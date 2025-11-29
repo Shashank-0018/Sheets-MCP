@@ -1,13 +1,28 @@
 {
   "mcpServers": {
-    "google-sheets": {
-      "command": "node",
-      "args": ["dist/mcp-server.js"],
-      "transport": "stdio",
-      "trust": true,
-      "env": {
-        "MCP_HTTP_SERVER_URL": "http://localhost:3000"
+      "google-sheets": {
+          "command": "node",
+          "args": [
+              "dist/mcp-server.js"
+          ],
+          "transport": "stdio",
+          "trust": true,
+          "env": {
+              "MCP_HTTP_SERVER_URL": "http://localhost:3000",
+              "MCP_TOKEN": "your_secure_mcp_token_here"
+          }
+      },
+      "pokemon-mcp-server": {
+          "command": "npx",
+          "args": [
+              "--yes",
+              "pokeapi-mcp-server@1.4.0"
+          ],
+          "transport": "stdio",
+          "trust": true,
+          "env": {
+              "MCP_HTTP_SERVER_URL": "https://pokemon-mcp-server-vs8m.onrender.com"
+          }
       }
-    }
   }
 }

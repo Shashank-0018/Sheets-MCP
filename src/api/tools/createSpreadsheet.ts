@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { GOOGLE_SHEETS_API_SERVER_URL } from '../config';
+import { createHeadersWithUserId } from '../../utils/userIdHelper';
 
 export const createSpreadsheetTool = {
   name: 'createSpreadsheet',
@@ -58,9 +59,7 @@ export const createSpreadsheetHandler = async (req: Request, res: Response) => {
       `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets`,
       { properties, sheets },
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createHeadersWithUserId(req), // Pass userId for multi-user token isolation
       }
     );
 

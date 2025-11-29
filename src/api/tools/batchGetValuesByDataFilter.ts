@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-
 import { GOOGLE_SHEETS_API_SERVER_URL } from '../config';
+import { createHeadersWithUserId } from '../../utils/userIdHelper';
 export const batchGetValuesByDataFilterTool = {
   name: 'batchGetValuesByDataFilter',
   description: 'Returns one or more ranges of values that match the specified data filters.',
@@ -58,9 +58,7 @@ export const batchGetValuesByDataFilterHandler = async (req: Request, res: Respo
       `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values:batchGetByDataFilter`,
       requestBody,
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createHeadersWithUserId(req),
       }
     );
 

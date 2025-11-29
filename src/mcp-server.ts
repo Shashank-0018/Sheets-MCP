@@ -5,10 +5,24 @@
  * This server communicates via stdio and forwards tool calls to the HTTP API server
  */
 
+// Load environment variables from .env file
+import 'dotenv/config';
+
 import * as readline from 'readline';
 import axios from 'axios';
 
 const HTTP_SERVER_URL = process.env.MCP_HTTP_SERVER_URL;
+const MCP_TOKEN = process.env.MCP_TOKEN;
+
+// Create axios instance with default headers for MCP authentication
+const apiClient = axios.create({
+  headers: MCP_TOKEN ? {
+    'Authorization': `Bearer ${MCP_TOKEN}`,
+    'Content-Type': 'application/json',
+  } : {
+    'Content-Type': 'application/json',
+  },
+});
 
 interface MCPRequest {
   jsonrpc: '2.0';
@@ -114,7 +128,7 @@ class MCPServer {
     }
     
     try {
-      const response = await axios.get(`${HTTP_SERVER_URL}/tools`);
+      const response = await apiClient.get(`${HTTP_SERVER_URL}/tools`);
       const tools = response.data;
 
       // Convert tools to MCP format
@@ -162,15 +176,10 @@ class MCPServer {
         };
       }
 
-      // Call the HTTP API endpoint
-      const response = await axios.post(
+      // Call the HTTP API endpoint with MCP Bearer token authentication
+      const response = await apiClient.post(
         `${HTTP_SERVER_URL}/api/tools/${name}`,
-        args || {},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+        args || {}
       );
 
       return {
@@ -257,14 +266,17 @@ class MCPServer {
 // Verify HTTP server is accessible
 async function verifyHTTPServer() {
   try {
-    const response = await axios.get(`${HTTP_SERVER_URL}/tools`, { timeout: 2000 });
+    const response = await apiClient.get(`${HTTP_SERVER_URL}/tools`, { timeout: 2000 });
     return true;
-  } catch (error) {
-    process.stderr.write(
-      `\n⚠️  WARNING: HTTP server at ${HTTP_SERVER_URL} is not accessible.\n` +
-      `   Please start it with: npm start\n` +
-      `   The MCP server will continue but tool calls will fail.\n\n`
-    );
+  } catch (error: any) {
+    const errorMsg = error.response?.status === 401 || error.response?.status === 403
+      ? `\n⚠️  WARNING: HTTP server authentication failed.\n` +
+        `   Please set MCP_TOKEN environment variable.\n` +
+        `   The MCP server will continue but tool calls will fail.\n\n`
+      : `\n⚠️  WARNING: HTTP server at ${HTTP_SERVER_URL} is not accessible.\n` +
+        `   Please start it with: npm start\n` +
+        `   The MCP server will continue but tool calls will fail.\n\n`;
+    process.stderr.write(errorMsg);
     return false;
   }
 }

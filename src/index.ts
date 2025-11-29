@@ -1,3 +1,6 @@
+// Load environment variables from .env file
+import 'dotenv/config';
+
 import express from 'express';
 import bodyParser from 'body-parser';
 import { tools } from './tools';
@@ -24,6 +27,11 @@ app.get('/tools', (req, res) => {
 
 // API routes
 app.use('/api', apiRouter);
+
+// Auth routes (for MCP token management)
+import { getMcpTokenHandler, linkMcpTokenHandler } from './api/auth';
+app.get('/auth/mcp-token', getMcpTokenHandler);
+app.post('/auth/link-token', linkMcpTokenHandler);
 
 // Start server
 app.listen(port, () => {

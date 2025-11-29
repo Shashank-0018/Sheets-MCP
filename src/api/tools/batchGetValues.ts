@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { GOOGLE_SHEETS_API_SERVER_URL } from '../config';
+import { createHeadersWithUserId } from '../../utils/userIdHelper';
 
 export const batchGetValuesTool = {
   name: 'batchGetValues',
@@ -62,6 +63,7 @@ export const batchGetValuesHandler = async (req: Request, res: Response) => {
       `${GOOGLE_SHEETS_API_SERVER_URL}/spreadsheets/${spreadsheetId}/values:batchGet`,
       {
         params: params,
+        headers: createHeadersWithUserId(req),
       }
     );
 

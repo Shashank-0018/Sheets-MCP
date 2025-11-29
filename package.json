@@ -21,7 +21,9 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.84.0",
     "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "googleapis": "^165.0.0"
   },
