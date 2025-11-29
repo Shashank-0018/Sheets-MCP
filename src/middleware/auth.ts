@@ -50,8 +50,7 @@ export async function mcpAuthMiddleware(
       }
       // Development mode: allow requests without token
       console.warn('⚠️  MCP_TOKEN not set - allowing unauthenticated requests (development mode)');
-      console.log('   DEBUG: Falling back to default_user because Supabase is not configured and no MCP_TOKEN set');
-    // (req as AuthenticatedRequest).userId = 'default_user'; // Disabled default_user fallback
+      // Note: We do NOT set default_user here anymore to enforce strict auth
       next();
       return;
     }
@@ -64,8 +63,8 @@ export async function mcpAuthMiddleware(
       return;
     }
 
-    // Single-user mode: use default user
-    // (req as AuthenticatedRequest).userId = 'default_user'; // Disabled default_user fallback
+    // Single-user mode
+    // Note: We do NOT set default_user here anymore to enforce strict auth
     (req as AuthenticatedRequest).mcpToken = providedToken;
     next();
     return;
@@ -111,4 +110,3 @@ function secureTokenCompare(a: string, b: string): boolean {
 
   return result === 0;
 }
-

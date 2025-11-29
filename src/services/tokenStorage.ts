@@ -184,8 +184,6 @@ export class MultiUserTokenStorage {
         console.error(`Error storing token for user ${userId}:`, error);
         return false;
       }
-
-      console.log(`✅ Token stored for user: ${userId}`);
       return true;
     } catch (error: any) {
       console.error(`Error in storeToken for user ${userId}:`, error);
@@ -270,7 +268,6 @@ export class MultiUserTokenStorage {
         return false;
       }
 
-      console.log(`✅ Token revoked for user: ${userId}`);
       return true;
     } catch (error: any) {
       console.error(`Error in revokeToken for user ${userId}:`, error);
