@@ -1,22 +1,37 @@
 {
-  "name": "mcp-server",
+  "name": "google-sheets-mcp-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "MCP Server for Google Sheets integration",
+  "main": "dist/index.js",
   "bin": {
-    "mcp-server": "dist/mcp-server.js"
+    "google-sheets-mcp-server": "dist/mcp-server.js"
   },
   "scripts": {
     "start": "npm-run-all --parallel start:main start:sheets",
     "start:main": "ts-node src/index.ts",
     "start:sheets": "ts-node src/google-sheets-api-server.ts",
+    "start:prod": "node dist/unified-server.js",
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "mcp": "ts-node src/mcp-server.ts",
     "test": "npm run build && mocha dist/test/sheets-api.test.js",
     "auth": "ts-node src/google-sheets-api-server.ts",
     "test:watch": "tsc --watch & mocha --watch dist/test/sheets-api.test.js"
   },
-  "keywords": [],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "keywords": [
+    "mcp",
+    "google-sheets",
+    "ai",
+    "llm",
+    "cursor",
+    "claude"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -25,7 +40,8 @@
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "googleapis": "^165.0.0"
+    "googleapis": "^165.0.0",
+    "npm-run-all": "^4.1.5"
   },
   "devDependencies": {
     "@types/chai": "^5.2.3",
@@ -38,7 +54,6 @@
     "chai-http": "^5.1.2",
     "mocha": "^9.2.2",
     "nodemon": "^3.1.4",
-    "npm-run-all": "^4.1.5",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",

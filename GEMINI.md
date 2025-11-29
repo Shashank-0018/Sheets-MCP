@@ -28,3 +28,12 @@ I will ask user to restart/start the server and use Curl to verify it
 7. we have to create Test Scripts in Test/
 8. We can follow the Framework and MCP-from-API doc for our tasks
 9. We should add README.md files in each folder and subfolder
+10. The project is configured as an npm package (`google-sheets-mcp-server`).
+    - `package.json` updated with correct metadata and scripts.
+    - `.npmignore` created.
+    - `LICENSE` created.
+    - Build script verified.
+11. Configured for Render Deployment:
+    - Created `src/unified-server.ts` to run both services on a single port.
+    - Updated `package.json` with `start:prod` script.
+    - Created `render.yaml`.

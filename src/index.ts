@@ -34,6 +34,10 @@ app.get('/auth/mcp-token', getMcpTokenHandler);
 app.post('/auth/link-token', linkMcpTokenHandler);
 
 // Start server
-app.listen(port, () => {
-  console.log(`MCP HTTP API Server is running on port ${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`MCP HTTP API Server is running on port ${port}`);
+  });
+}
+
+export { app };
