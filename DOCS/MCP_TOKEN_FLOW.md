@@ -1,60 +1,58 @@
-# MCP Token Flow in Multi-User Mode
+# MCP Token Flow (Auto-Generated)
 
-## Current Issue
+This document explains the authentication flow for the Google Sheets MCP Server, which uses auto-generated tokens for security and ease of use.
 
-When you authenticated, the OAuth callback received `state=default` (no MCP token), so the MCP token → user mapping wasn't created in the database.
+## The Flow
 
-## Solution: Two Options
+1.  **Initiation**:
+    - User visits `http://localhost:3001/auth/url`.
+    - No prior authentication is required.
 
-### Option 1: Link MCP Token After OAuth (Recommended)
+2.  **Google OAuth**:
+    - User logs in with their Google account.
+    - Grants permissions to the app.
 
-Since you've already authenticated, you can link your MCP token now:
+3.  **Token Generation (Server-Side)**:
+    - The server receives the OAuth callback.
+    - It extracts the user's email (e.g., `user@example.com`).
+    - It generates a **secure, random MCP Token** (e.g., `mcp_a1b2c3...`).
+    - It hashes this token and stores it in the `mcp_users` table, linked to the user's email.
+    - It stores the Google OAuth tokens in the `google_oauth_tokens` table.
 
-```powershell
-# Link your MCP token to your email
-$body = @{
-    mcpToken = "your_mcp_token_here"
-    email = "shashank.asthana05@gmail.com"
-} | ConvertTo-Json
+4.  **Token Delivery**:
+    - The server displays the **MCP Token** to the user in the browser.
+    - **Important:** This is the only time the raw token is shown.
 
-Invoke-RestMethod -Uri "http://localhost:3000/auth/link-token" -Method Post -Headers @{ "Content-Type" = "application/json" } -Body $body
+5.  **Usage**:
+    - The user configures their MCP client (Cursor, Gemini) with this `MCP_TOKEN`.
+    - Every request from the client includes `Authorization: Bearer <MCP_TOKEN>`.
+
+6.  **Verification**:
+    - The server receives a request.
+    - It hashes the provided token.
+    - It looks up the hash in `mcp_users` to find the `user_id`.
+    - It uses the `user_id` to retrieve the correct Google OAuth credentials.
+    - The request proceeds with the user's identity.
+
+## Diagram
+
+```text
+User Browser          MCP Server (Port 3001)          Supabase DB
+     │                          │                          │
+     │ 1. Request Auth URL      │                          │
+     │─────────────────────────►│                          │
+     │                          │                          │
+     │ 2. Redirect to Google    │                          │
+     │◄─────────────────────────│                          │
+     │                          │                          │
+     │ ... Google Login ...     │                          │
+     │                          │                          │
+     │ 3. Callback (Code)       │                          │
+     │─────────────────────────►│                          │
+     │                          │ 4. Generate Token        │
+     │                          │ 5. Hash & Store ────────►│ Store (Hash, UserID)
+     │                          │                          │ Store (UserID, OAuth)
+     │ 6. Display Token         │                          │
+     │◄─────────────────────────│                          │
+     │                          │                          │
 ```
-
-### Option 2: Re-authenticate with MCP Token
-
-1. Get OAuth URL with your MCP token:
-```powershell
-$mcpToken = "your_mcp_token_here"
-$response = Invoke-RestMethod -Uri "http://localhost:3001/auth/url" -Headers @{ "Authorization" = "Bearer $mcpToken" }
-$response.authUrl
-```
-
-2. Visit the authUrl and authenticate
-3. The MCP token will be automatically linked to your email
-
-## How It Works
-
-1. **OAuth Flow:**
-   - User provides MCP token in Authorization header when calling `/auth/url`
-   - MCP token is passed in OAuth `state` parameter
-   - After OAuth, callback extracts email and creates mapping: `mcp_token_hash → user_id (email)`
-
-2. **API Requests:**
-   - User provides MCP token in Authorization header
-   - Middleware looks up token hash in `mcp_users` table
-   - Gets `user_id` (email) from database
-   - Loads Google OAuth token for that `user_id`
-
-3. **Database Structure:**
-   - `mcp_users`: Maps `mcp_token_hash` → `user_id` (email)
-   - `google_oauth_tokens`: Stores Google tokens by `user_id` (email)
-
-## Check Your Current Status
-
-```powershell
-# Check if your user exists
-Invoke-RestMethod -Uri "http://localhost:3000/auth/mcp-token?email=shashank.asthana05@gmail.com"
-```
-
-This will tell you if your user record exists and if an MCP token is linked.
-

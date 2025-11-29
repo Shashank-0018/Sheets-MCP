@@ -1,46 +1,82 @@
 # MCP Server Setup Guide
 
-This guide will help you set up and test the Google Sheets MCP server with Cursor and Gemini.
+This guide will help you set up and test the Google Sheets MCP server with Cursor and Gemini, featuring the new multi-user architecture.
 
 ## Prerequisites
 
-1. **Build the project:**
-   ```bash
-   npm run build
-   ```
+1.  **Node.js** (v18.x or higher)
+2.  **Supabase Project**: Required for multi-user token storage.
+3.  **Google Cloud Project**: With Google Sheets API enabled and OAuth credentials.
 
-2. **Ensure you have a valid `token.json` file:**
-   - Run `npm start` and visit `http://localhost:3000/auth/url` to get the OAuth URL
-   - Complete the OAuth flow to generate `token.json`
+## Step 1: Environment Configuration
 
-## Setup Steps
-
-### 1. Start the HTTP API Server
-
-The MCP server needs the HTTP API server running. Start it with:
+Create a `.env` file in the project root with the following variables:
 
 ```bash
-npm start
+# Google OAuth Credentials
+GOOGLE_CLIENT_ID="your_client_id"
+GOOGLE_CLIENT_SECRET="your_client_secret"
+GOOGLE_REDIRECT_URI="http://localhost:3001/callback"
+
+# Supabase Configuration (Required for Multi-User)
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
+
+# Server Configuration
+PORT=3000
+GOOGLE_SHEETS_API_SERVER_PORT=3001
 ```
 
-This will start:
-- Main HTTP API server on port 3000 (serves tools)
-- Google Sheets API server on port 3001 (handles Google Sheets operations)
+## Step 2: Database Setup
 
-### 2. Configure Cursor MCP Settings
+1.  Go to your Supabase project's SQL Editor.
+2.  Run the contents of `supabase/schema.sql` to create the necessary tables (`mcp_users`, `google_oauth_tokens`).
 
-The MCP server is already configured in `.gemini/settings.json`. The configuration:
+## Step 3: Build and Start
+
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+2.  **Build the project:**
+    ```bash
+    npm run build
+    ```
+
+3.  **Start the servers:**
+    ```bash
+    npm start
+    ```
+    This starts:
+    - **MCP HTTP Server** on port 3000
+    - **Google Sheets API Server** on port 3001
+
+## Step 4: Authentication & Token Generation
+
+1.  **Get OAuth URL:**
+    Visit `http://localhost:3001/auth/url` in your browser.
+
+2.  **Authorize:**
+    Log in with your Google account and grant permissions.
+
+3.  **Get MCP Token:**
+    After authorization, you will be redirected to a page displaying your **Auto-Generated MCP Token**.
+    **Save this token!** You will need it to authenticate your MCP client.
+
+## Step 5: Configure MCP Client (Cursor/Gemini)
+
+Add the server to your MCP configuration (e.g., `.cursor/mcp.json` or global settings):
 
 ```json
 {
   "mcpServers": {
     "google-sheets": {
       "command": "node",
-      "args": ["dist/mcp-server.js"],
-      "transport": "stdio",
-      "trust": true,
+      "args": ["path/to/google-sheets-mcp/dist/mcp-server.js"],
       "env": {
-        "MCP_HTTP_SERVER_URL": "http://localhost:3000"
+        "MCP_HTTP_SERVER_URL": "http://localhost:3000",
+        "MCP_TOKEN": "your_auto_generated_mcp_token_here"
       }
     }
   }
@@ -76,58 +112,33 @@ The MCP server exposes the following Google Sheets tools:
 
 ## Testing
 
-### Test the HTTP Server
+### Test HTTP API (with Token)
 
 ```bash
-# Check if tools are available
-curl http://localhost:3000/tools
-
-# Test a tool
-curl -X POST http://localhost:3000/api/tools/getValuesFromRange \
-  -H "Content-Type: application/json" \
-  -d '{"spreadsheetId": "YOUR_SPREADSHEET_ID", "range": "Sheet1!A1:B2"}'
+curl http://localhost:3000/api/tools/listSpreadsheets \
+  -H "Authorization: Bearer your_mcp_token"
 ```
 
-### Test the MCP Server
-
-You can test the MCP server directly:
+### Test MCP Server
 
 ```bash
-# Build first
-npm run build
-
-# Test MCP server (requires HTTP server running)
 npm run mcp
 ```
-
-Then send JSON-RPC requests via stdin.
+Then paste a JSON-RPC request:
+```json
+{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}
+```
 
 ## Troubleshooting
 
-1. **MCP server can't connect to HTTP server:**
-   - Ensure `npm start` is running
-   - Check that port 3000 is not blocked
-   - Verify `MCP_HTTP_SERVER_URL` in `.gemini/settings.json` is correct
+1.  **"User ID is required for authorization"**:
+    - This means you are not passing a valid `MCP_TOKEN`.
+    - Ensure `MCP_TOKEN` is set in your client configuration.
+    - Ensure the token matches the one generated during OAuth.
 
-2. **"No token found" error:**
-   - Run `npm start` and complete OAuth flow
-   - Ensure `token.json` exists in the project root
+2.  **"Supabase not fully configured"**:
+    - Check your `.env` file for `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
 
-3. **Tools not appearing:**
-   - Rebuild: `npm run build`
-   - Restart Cursor/Gemini
-   - Check HTTP server is running: `curl http://localhost:3000/tools`
-
-4. **TypeScript compilation errors:**
-   - Run `npm run build` to see errors
-   - Fix any TypeScript issues before testing
-
-## Environment Variables
-
-You can set these environment variables instead of using `secrets.json`:
-
-- `GOOGLE_CLIENT_ID` - Your Google OAuth client ID
-- `GOOGLE_CLIENT_SECRET` - Your Google OAuth client secret
-- `GOOGLE_REDIRECT_URI` - OAuth redirect URI (defaults to `http://localhost:3001/callback`)
-- `MCP_HTTP_SERVER_URL` - HTTP server URL for MCP (defaults to `http://localhost:3000`)
-
+3.  **"Invalid MCP token"**:
+    - The token provided does not match any user in the database.
+    - Re-authenticate via `http://localhost:3001/auth/url` to get a new token.
