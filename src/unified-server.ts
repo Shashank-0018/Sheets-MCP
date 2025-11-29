@@ -16,8 +16,12 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', service: 'unified-mcp-server' });
 });
 
-app.listen(port, () => {
-    console.log(`Unified MCP Server running on port ${port}`);
-    console.log(`- MCP API available`);
-    console.log(`- Google Sheets API available`);
-});
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`Unified MCP Server running on port ${port}`);
+        console.log(`- MCP API available`);
+        console.log(`- Google Sheets API available`);
+    });
+}
+
+export default app;

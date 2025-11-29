@@ -33,7 +33,7 @@ I will ask user to restart/start the server and use Curl to verify it
     - `.npmignore` created.
     - `LICENSE` created.
     - Build script verified.
-11. Configured for Render Deployment:
-    - Created `src/unified-server.ts` to run both services on a single port.
-    - Updated `package.json` with `start:prod` script.
-    - Created `render.yaml`.
+11. Configured for Vercel Deployment:
+    - Created `src/unified-server.ts` to run both services.
+    - Updated `package.json` with `engines` for Node.js version.
+    - Created `vercel.json` for serverless configuration.
