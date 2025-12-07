@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
-import { app as mcpApp } from './index';
-import { app as sheetsApp } from './google-sheets-api-server';
+import mcpApp from './index';
+import sheetsApp from './google-sheets-api-server';
 
 const app = express();
 const port = process.env.PORT || 3000;
