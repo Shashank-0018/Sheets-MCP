@@ -73,7 +73,9 @@ Add the server to your MCP configuration (e.g., `.cursor/mcp.json` or global set
   "mcpServers": {
     "google-sheets": {
       "command": "node",
-      "args": ["path/to/google-sheets-mcp/dist/mcp-server.js"],
+      "args": ["dist/mcp-server.js"],
+      "transport": "stdio",  // Specifies the communication protocol (standard I/O)
+      "trust": true,         // Indicates that the MCP server is trusted
       "env": {
         "MCP_HTTP_SERVER_URL": "http://localhost:3000",
         "MCP_TOKEN": "your_auto_generated_mcp_token_here"
